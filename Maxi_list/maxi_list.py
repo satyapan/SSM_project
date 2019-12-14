@@ -1,0 +1,59 @@
+from numpy import *
+from pylab import *
+from glob import glob
+
+files = glob("*.dat")
+logfile = open("logfile.txt", "w+")
+logfile.close()
+for filename in files:
+	data = loadtxt(filename, float)
+	jd_0 = data[:,0]
+	flux_0 = data[:,3]+data[:,5]
+	start = 0
+	for k in range(len(jd_0)):
+		if jd_0[k]>57296:
+			start = k
+			break
+	jd = jd_0[k:]
+	flux = flux_0[k:]
+	outburst_0 = []
+	for i in range(len(flux)):
+		if flux[i] > 0.5:
+			outburst_0.append(int(1))
+		else:
+			outburst_0.append(int(0))
+	outburst_0 = array(outburst_0)
+	outburst_1 = []
+	for j in range(len(outburst_0)-1):
+		if outburst_0[j+1] > outburst_0[j]:
+			outburst_1.append(jd[j+1])
+		elif outburst_0[j+1] < outburst_0[j]:
+			outburst_1.append(jd[j])
+	outburst = []
+	if outburst_0[0] == 0:
+		for j in range(0,len(outburst_1)-1,2):
+			outburst.append((outburst_1[j],outburst_1[j+1]))
+	if outburst_0[0] == 1:
+		for j in range(1,len(outburst_1)-1,2):
+			outburst.append((outburst_1[j],outburst_1[j+1]))
+	full = []
+	for i in outburst_0:
+		if i == 1:
+			full.append(i)
+	if len(full) == len(outburst_0):
+		outburst.append((jd[0],jd[len(jd)-1]))
+	with open("logfile.txt", "a+") as f:
+		print >> f, filename[0:9]
+		if len(outburst) != 0:
+			for item in outburst:
+				print >> f, item
+		else:
+			print >> f, "None"
+	print(outburst)
+	'''
+	plot(jd, flux, label="MAXI lightcurve")
+	xlabel("MJD")
+	ylabel("Flux (Photons/s/cm^2)")
+	legend()
+	show()
+	'''
